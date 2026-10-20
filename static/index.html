@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hollow Dawn</title>
+  <link rel="stylesheet" href="./css/hud.css">
+</head>
+<body>
+  <canvas id="vs-canvas"></canvas>
+
+  <header id="hud">
+    <span id="hud-timer">00:00</span>
+    <span class="bar hp"><span id="hud-hp-fill"></span><span id="hud-hp-text">100/100</span></span>
+    <span class="bar xp"><span id="hud-xp-fill"></span></span>
+    <span>Lv <b id="hud-level">1</b></span>
+    <span title="gold">&#9679; <b id="hud-gold">0</b></span>
+    <span title="kills">&#10016; <b id="hud-kills">0</b></span>
+    <span id="hud-weapons"></span>
+    <span id="hud-mute">sound: on</span>
+    <span id="hud-pause" class="hidden">PAUSED</span>
+  </header>
+
+  <section id="menu-screen" class="screen">
+    <h1>Hollow Dawn</h1>
+    <p class="tagline">Survive until dawn. Your weapons fire on their own.</p>
+    <ul class="keys">
+      <li>WASD / Arrow keys — move</li>
+      <li>Esc — pause</li>
+      <li>M — mute</li>
+      <li>1 / 2 / 3 — choose a card</li>
+    </ul>
+    <button id="start-button">Enter the night</button>
+  </section>
+
+  <section id="levelup-screen" class="screen dim hidden">
+    <h2>Choose an upgrade</h2>
+    <div id="levelup-cards"></div>
+  </section>
+
+  <section id="end-screen" class="screen dim hidden">
+    <h1 id="end-title"></h1>
+    <ul id="end-stats"></ul>
+    <form id="score-form">
+      <input id="score-name" maxlength="16" placeholder="Name (max 16)" autocomplete="off">
+      <button id="submit-button" type="submit">Submit score</button>
+    </form>
+    <p id="rank-line"></p>
+    <h3>Top runs</h3>
+    <ol id="board"></ol>
+    <button id="again-button">Play again</button>
+  </section>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
