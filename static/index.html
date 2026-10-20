@@ -1,56 +1,281 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hollow Dawn</title>
-  <link rel="stylesheet" href="./css/hud.css">
-</head>
-<body>
-  <canvas id="vs-canvas"></canvas>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+		<title>Hollow Dawn</title>
+		<style>
+html, body, #canvas {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
 
-  <header id="hud">
-    <span id="hud-timer">00:00</span>
-    <span class="bar hp"><span id="hud-hp-fill"></span><span id="hud-hp-text">100/100</span></span>
-    <span class="bar xp"><span id="hud-xp-fill"></span></span>
-    <span>Lv <b id="hud-level">1</b></span>
-    <span title="gold">&#9679; <b id="hud-gold">0</b></span>
-    <span title="kills">&#10016; <b id="hud-kills">0</b></span>
-    <span id="hud-weapons"></span>
-    <span id="hud-mute">sound: on</span>
-    <span id="hud-pause" class="hidden">PAUSED</span>
-  </header>
+body {
+	color: white;
+	background-color: black;
+	overflow: hidden;
+	touch-action: none;
+}
 
-  <section id="menu-screen" class="screen">
-    <h1>Hollow Dawn</h1>
-    <p class="tagline">Survive until dawn. Your weapons fire on their own.</p>
-    <ul class="keys">
-      <li>WASD / Arrow keys — move</li>
-      <li>Esc — pause</li>
-      <li>M — mute</li>
-      <li>1 / 2 / 3 — choose a card</li>
-    </ul>
-    <button id="start-button">Enter the night</button>
-  </section>
+#canvas {
+	display: block;
+}
 
-  <section id="levelup-screen" class="screen dim hidden">
-    <h2>Choose an upgrade</h2>
-    <div id="levelup-cards"></div>
-  </section>
+#canvas:focus {
+	outline: none;
+}
 
-  <section id="end-screen" class="screen dim hidden">
-    <h1 id="end-title"></h1>
-    <ul id="end-stats"></ul>
-    <form id="score-form">
-      <input id="score-name" maxlength="16" placeholder="Name (max 16)" autocomplete="off">
-      <button id="submit-button" type="submit">Submit score</button>
-    </form>
-    <p id="rank-line"></p>
-    <h3>Top runs</h3>
-    <ol id="board"></ol>
-    <button id="again-button">Play again</button>
-  </section>
+#status, #status-splash, #status-progress {
+	position: absolute;
+	left: 0;
+	right: 0;
+}
 
-  <script type="module" src="./js/main.js"></script>
-</body>
+#status, #status-splash {
+	top: 0;
+	bottom: 0;
+}
+
+#status {
+	background-color: #242424;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	visibility: hidden;
+}
+
+#status-splash {
+	max-height: 100%;
+	max-width: 100%;
+	margin: auto;
+}
+
+#status-splash.show-image--false {
+	display: none;
+}
+
+#status-splash.fullsize--true {
+	height: 100%;
+	width: 100%;
+	object-fit: contain;
+}
+
+#status-splash.use-filter--false {
+	image-rendering: pixelated;
+}
+
+#status-progress, #status-notice {
+	display: none;
+}
+
+#status-progress {
+	bottom: 10%;
+	width: 50%;
+	margin: 0 auto;
+}
+
+#status-notice {
+	background-color: #5b3943;
+	border-radius: 0.5rem;
+	border: 1px solid #9b3943;
+	color: #e0e0e0;
+	font-family: 'Noto Sans', 'Droid Sans', Arial, sans-serif;
+	line-height: 1.3;
+	margin: 0 2rem;
+	overflow: hidden;
+	padding: 1rem;
+	text-align: center;
+	z-index: 1;
+}
+		</style>
+		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+<script>
+window.__vsSnapshot = null;
+window.VS_STATE = function () { return window.__vsSnapshot; };
+(function () {
+  function relay(e) {
+    var t = e.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    if (e.type === "keydown" && e.repeat) return;
+    if (window.vsHost && window.vsHost.on_key) window.vsHost.on_key(String(e.code), e.type === "keydown");
+  }
+  window.addEventListener("keydown", relay);
+  window.addEventListener("keyup", relay);
+})();
+window.vsShowSubmit = function (p) {
+  if (document.getElementById("vs-submit")) return;
+  var d = document.createElement("div");
+  d.id = "vs-submit";
+  d.style.cssText = "position:fixed;right:16px;top:56px;width:300px;max-height:80vh;overflow:auto;z-index:40;background:rgba(16,19,28,0.94);border:1px solid #2a3140;border-radius:8px;padding:12px;color:#d8d2c0;font:13px monospace";
+  var h = document.createElement("div");
+  h.textContent = "Score " + p.score + " — sign the ledger";
+  h.style.cssText = "margin-bottom:8px";
+  var inp = document.createElement("input");
+  inp.id = "vs-name";
+  inp.maxLength = 16;
+  inp.placeholder = "Name (max 16)";
+  inp.autocomplete = "off";
+  inp.style.cssText = "width:100%;box-sizing:border-box;background:#10131c;border:1px solid #2a3140;color:#d8d2c0;padding:6px;margin-bottom:8px";
+  var btn = document.createElement("button");
+  btn.id = "vs-send";
+  btn.textContent = "Submit score";
+  btn.style.cssText = "width:100%;background:#8e2f35;border:0;color:#d8d2c0;padding:7px;cursor:pointer";
+  var res = document.createElement("div");
+  res.id = "vs-result";
+  res.style.cssText = "margin-top:8px;white-space:pre-line";
+  d.appendChild(h); d.appendChild(inp); d.appendChild(btn); d.appendChild(res);
+  document.body.appendChild(d);
+  function board() {
+    return fetch("/api/highscores").then(function (r) { if (!r.ok) throw 0; return r.json(); })
+      .then(function (j) {
+        return (j.scores || []).map(function (s) {
+          return "#" + s.rank + " " + s.name + " · " + s.score + " pts · Lv " + s.level + " · " + s.kills + " kills";
+        }).join("\n");
+      });
+  }
+  btn.onclick = function () {
+    btn.disabled = true;
+    var name = (inp.value || "").trim().slice(0, 16) || "nameless";
+    fetch("/api/highscores", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name, score: p.score, time_survived: p.time_survived, kills: p.kills, level: p.level })
+    }).then(function (r) { if (!r.ok) throw 0; return r.json(); })
+      .then(function (j) {
+        res.textContent = "Rank #" + j.rank;
+        return board().then(function (b) {
+          res.textContent += "\n\n" + (b || "No scores yet.");
+        }).catch(function () { res.textContent += "\n(board offline)"; });
+      })
+      .catch(function () { res.textContent = "offline"; });
+  };
+};
+</script>
+	</head>
+	<body>
+		<canvas id="canvas">
+			Your browser does not support the canvas tag.
+		</canvas>
+
+		<noscript>
+			Your browser does not support JavaScript.
+		</noscript>
+
+		<div id="status">
+			<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="index.png" alt="">
+			<progress id="status-progress"></progress>
+			<div id="status-notice"></div>
+		</div>
+
+		<script src="index.js"></script>
+		<script>
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":2220304,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_THREADS_ENABLED = false;
+const engine = new Engine(GODOT_CONFIG);
+
+(function () {
+	const statusOverlay = document.getElementById('status');
+	const statusProgress = document.getElementById('status-progress');
+	const statusNotice = document.getElementById('status-notice');
+
+	let initializing = true;
+	let statusMode = '';
+
+	function setStatusMode(mode) {
+		if (statusMode === mode || !initializing) {
+			return;
+		}
+		if (mode === 'hidden') {
+			statusOverlay.remove();
+			initializing = false;
+			return;
+		}
+		statusOverlay.style.visibility = 'visible';
+		statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
+		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
+		statusMode = mode;
+	}
+
+	function setStatusNotice(text) {
+		while (statusNotice.lastChild) {
+			statusNotice.removeChild(statusNotice.lastChild);
+		}
+		const lines = text.split('\n');
+		lines.forEach((line) => {
+			statusNotice.appendChild(document.createTextNode(line));
+			statusNotice.appendChild(document.createElement('br'));
+		});
+	}
+
+	function displayFailureNotice(err) {
+		console.error(err);
+		if (err instanceof Error) {
+			setStatusNotice(err.message);
+		} else if (typeof err === 'string') {
+			setStatusNotice(err);
+		} else {
+			setStatusNotice('An unknown error occurred.');
+		}
+		setStatusMode('notice');
+		initializing = false;
+	}
+
+	const missing = Engine.getMissingFeatures({
+		threads: GODOT_THREADS_ENABLED,
+	});
+
+	if (missing.length !== 0) {
+		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
+			let serviceWorkerRegistrationPromise;
+			try {
+				serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
+			} catch (err) {
+				serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
+			}
+			// There's a chance that installing the service worker would fix the issue
+			Promise.race([
+				serviceWorkerRegistrationPromise.then((registration) => {
+					if (registration != null) {
+						return Promise.reject(new Error('Service worker already exists.'));
+					}
+					return registration;
+				}).then(() => engine.installServiceWorker()),
+				// For some reason, `getRegistration()` can stall
+				new Promise((resolve) => {
+					setTimeout(() => resolve(), 2000);
+				}),
+			]).then(() => {
+				// Reload if there was no error.
+				window.location.reload();
+			}).catch((err) => {
+				console.error('Error while registering service worker:', err);
+			});
+		} else {
+			// Display the message as usual
+			const missingMsg = 'Error\nThe following features required to run Godot projects on the Web are missing:\n';
+			displayFailureNotice(missingMsg + missing.join('\n'));
+		}
+	} else {
+		setStatusMode('progress');
+		engine.startGame({
+			'onProgress': function (current, total) {
+				if (current > 0 && total > 0) {
+					statusProgress.value = current;
+					statusProgress.max = total;
+				} else {
+					statusProgress.removeAttribute('value');
+					statusProgress.removeAttribute('max');
+				}
+			},
+		}).then(() => {
+			setStatusMode('hidden');
+		}, displayFailureNotice);
+	}
+}());
+		</script>
+	</body>
 </html>
+
