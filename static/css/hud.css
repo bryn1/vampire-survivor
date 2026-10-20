@@ -1,0 +1,179 @@
+/* Hollow Dawn HUD + screens. Palette anchor: plan §4 (ink/slate/moonlight/
+   bone/blood/ichor/ember). One stylesheet for canvas chrome and menus. */
+
+:root {
+  --ink: #10131c;
+  --slate: #2a3140;
+  --moon: #aebdd4;
+  --bone: #d8d2c0;
+  --blood: #8e2f35;
+  --ichor: #6fae5a;
+  --ember: #c97b3d;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--bone);
+  font: 14px/1.4 "Segoe UI", system-ui, sans-serif;
+}
+
+#vs-canvas {
+  position: fixed;
+  inset: 0;
+  display: block;
+}
+
+/* ---------- HUD bar ---------- */
+
+#hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 14px;
+  background: linear-gradient(rgba(16, 19, 28, 0.85), rgba(16, 19, 28, 0));
+  pointer-events: none;
+  z-index: 5;
+}
+
+#hud-timer { font-size: 20px; font-weight: 700; color: var(--moon); }
+
+.bar {
+  position: relative;
+  width: 180px;
+  height: 14px;
+  background: var(--slate);
+  border: 1px solid rgba(174, 189, 212, 0.35);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.bar > span { display: block; height: 100%; }
+
+#hud-hp-fill { background: var(--blood); width: 100%; }
+#hud-xp-fill { background: var(--ichor); width: 0%; }
+
+#hud-hp-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--bone);
+}
+
+#hud-weapons { display: flex; gap: 6px; margin-left: auto; }
+
+.hud-weapon {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(42, 49, 64, 0.7);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.hud-weapon b { color: var(--ember); font-size: 11px; }
+
+#hud-mute { color: var(--moon); opacity: 0.7; }
+#hud-pause { color: var(--ember); font-weight: 700; letter-spacing: 2px; }
+
+/* ---------- Screens (menu / levelup / end) ---------- */
+
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  z-index: 10;
+}
+
+.screen.dim { background: rgba(16, 19, 28, 0.82); }
+.screen.hidden { display: none; }
+
+/* The menu must let clicks fall through to the canvas (canvas click and
+   Enter both start a run); only its button is interactive. */
+#menu-screen { pointer-events: none; }
+#menu-screen button { pointer-events: auto; }
+
+.screen h1 { font-size: 44px; margin: 0; color: var(--moon); letter-spacing: 4px; }
+.screen h2 { margin: 0; color: var(--moon); letter-spacing: 2px; }
+.screen .tagline { color: var(--bone); opacity: 0.8; }
+.screen ul.keys { list-style: none; padding: 0; opacity: 0.75; }
+
+.screen button {
+  font: inherit;
+  padding: 10px 26px;
+  background: var(--slate);
+  color: var(--bone);
+  border: 1px solid var(--moon);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.screen button:hover { border-color: var(--ember); color: var(--ember); }
+.screen button:disabled { opacity: 0.5; cursor: default; }
+
+/* ---------- Level-up cards: drawn at plan §4's 220x275 ---------- */
+
+#levelup-cards { display: flex; gap: 18px; }
+
+.vs-card {
+  width: 220px;
+  height: 275px;
+  padding: 26px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--slate); /* visible even when card-frame.png is absent */
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  border-radius: 10px;
+  cursor: pointer;
+  position: relative;
+}
+
+.vs-card:hover { outline: 2px solid var(--ember); }
+.vs-card h3 { margin: 0; color: var(--moon); font-size: 17px; }
+.vs-card p { margin: 0; font-size: 13px; opacity: 0.85; }
+.vs-icon { width: 22px; height: 22px; }
+.vs-glyph { font-size: 22px; color: var(--ember); }
+.vs-lv { color: var(--ichor); font-weight: 700; }
+.vs-key {
+  position: absolute;
+  top: 6px;
+  left: 10px;
+  color: var(--moon);
+  opacity: 0.6;
+  font-weight: 700;
+}
+
+/* ---------- End screen ---------- */
+
+#end-stats { list-style: none; padding: 0; font-size: 16px; }
+#score-form { display: flex; gap: 8px; }
+#score-name {
+  font: inherit;
+  padding: 8px 10px;
+  background: var(--slate);
+  color: var(--bone);
+  border: 1px solid var(--moon);
+  border-radius: 5px;
+}
+#rank-line { min-height: 20px; color: var(--ember); }
+#board { margin: 0; padding-left: 20px; text-align: left; }
+#board .board-empty { list-style: none; margin-left: -20px; opacity: 0.7; }
