@@ -1,0 +1,20 @@
+; Engine configuration file.
+; Hollow Dawn — Godot 4.7.2 client (Web export, threads OFF).
+
+config_version=5
+
+[application]
+
+config/name="Hollow Dawn"
+run/main_scene="res://Main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
