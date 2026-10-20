@@ -14,6 +14,7 @@ var _screens: CanvasLayer
 var _current_offer: Array = []
 var _web := false
 var _js: Object # the JavaScriptBridge singleton, web builds only
+var _js_cb: Object # keeps the inbound key callback alive
 
 
 func _ready() -> void:
@@ -44,7 +45,21 @@ func _ready() -> void:
 	if _web:
 		_js = Engine.get_singleton("JavaScriptBridge")
 		if _js != null:
-			_js.call("register", "vsHost", bridge)
+			_register_key_bridge()
+
+
+# Godot 4.7 removed JavaScriptBridge.register(); the inbound path is a
+# create_callback object hung on window.vsHost.on_key (same JS-side contract).
+func _register_key_bridge() -> void:
+	_js_cb = _js.call("create_callback", Callable(self, "_on_js_key"))
+	_js.call("eval", "window.vsHost = {};", true)
+	var host: Object = _js.call("get_interface", "vsHost")
+	host.set("on_key", _js_cb)
+
+
+func _on_js_key(args: Array) -> void:
+	if args.size() >= 2:
+		bridge.on_key(String(args[0]), bool(args[1]))
 
 
 func _process(_delta: float) -> void:
