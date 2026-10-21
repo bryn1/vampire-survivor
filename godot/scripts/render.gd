@@ -1,5 +1,6 @@
 # World renderer: procedural background (radial ink→slate gradient +
 # vignette), sprite draws at the Contract C sizes, and transient weapon FX.
+class_name GameRenderer
 extends Node2D
 
 const VIEW := Vector2(1280, 720)
@@ -26,6 +27,17 @@ const ENEMY_TINTS := {
 	"warden": Color(1.0, 0.72, 0.45),
 }
 
+# Additive glow halos on enemies + Dawnlight: modulate is multiplicative, so
+# a near-black sprite pixel × a pale tint stays dark. A colored aura added on
+# top separates them from the background regardless of sprite darkness.
+# Godot 4 has no per-draw blend switch (draw_set_blend_mode was Godot 3), so
+# the halos render on HaloPass below, a child node with an additive material.
+const GLOW_ALPHAS := Vector2(0.10, 0.18)   # outer, inner (enemies)
+const ENEMY_GLOW_RADII := Vector2(22.0, 12.0)
+const BOSS_GLOW_RADII := Vector2(40.0, 24.0)
+const DAWN_GLOW_RADII := Vector2(14.0, 8.0)
+const DAWN_GLOW_ALPHAS := Vector2(0.25, 0.40)
+
 const SPRITE_NAMES := ["player", "player-alt", "enemy-wraith", "enemy-hound",
 	"enemy-crawler", "enemy-cultist", "boss-warden", "coin", "gem"]
 
@@ -42,6 +54,9 @@ func _ready() -> void:
 	_bg = _build_background()
 	for name in SPRITE_NAMES:
 		_sprites[name] = load("res://assets/" + name + ".png")
+	var glow := HaloPass.new()
+	glow.host = self
+	add_child(glow)
 
 
 func _process(_delta: float) -> void:
@@ -189,3 +204,37 @@ func _build_background() -> ImageTexture:
 			var va := clampf((d - rv0) / (rv1 - rv0), 0.0, 1.0) * 0.55
 			img.set_pixel(px, py, col.lerp(Color.BLACK, va))
 	return ImageTexture.create_from_image(img)
+
+
+# Additive glow pass: child node whose CanvasItemMaterial adds light instead
+# of alpha-blending, so dark sprites get a bright colored aura against the
+# dark background. Pulls state from the host renderer each frame; draws after
+# the parent, which only brightens the overlap on top of the separation.
+class HaloPass:
+	extends Node2D
+	var host: Node2D
+
+	func _ready() -> void:
+		var mat := CanvasItemMaterial.new()
+		mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+		material = mat
+
+	func _process(_delta: float) -> void:
+		queue_redraw()
+
+	func _draw() -> void:
+		if host == null or host.game == null or host.world == null:
+			return
+		for h in host.world.heals:
+			_circles(Vector2(h.x, h.y) - host._cam, GameRenderer.DAWN_GLOW_RADII,
+				GameRenderer.DAWNLIGHT, GameRenderer.DAWN_GLOW_ALPHAS)
+		for e in host.world.enemies:
+			var radii: Vector2 = GameRenderer.BOSS_GLOW_RADII if e.boss else GameRenderer.ENEMY_GLOW_RADII
+			_circles(Vector2(e.x, e.y) - host._cam, radii,
+				GameRenderer.ENEMY_TINTS.get(e.type, Color.WHITE), GameRenderer.GLOW_ALPHAS)
+
+	func _circles(screen: Vector2, radii: Vector2, tint: Color, alphas: Vector2) -> void:
+		if screen.x < -radii.x or screen.y < -radii.x or screen.x > GameRenderer.VIEW.x + radii.x or screen.y > GameRenderer.VIEW.y + radii.x:
+			return
+		draw_circle(screen, radii.x, Color(tint, alphas.x))
+		draw_circle(screen, radii.y, Color(tint, alphas.y))
