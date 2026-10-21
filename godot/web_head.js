@@ -12,7 +12,10 @@ window.VS_STATE = function () { return window.__vsSnapshot; };
   window.addEventListener("keyup", relay);
 })();
 window.vsShowSubmit = function (p) {
-  if (document.getElementById("vs-submit")) return;
+  // vs-fix-11075 (DA F2): rebuild the panel on every terminal show — a second
+  // death gets a fresh score line, empty #vs-result and an enabled button.
+  var stalePanel = document.getElementById("vs-submit");
+  if (stalePanel) stalePanel.remove();
   var d = document.createElement("div");
   d.id = "vs-submit";
   d.style.cssText = "position:fixed;right:16px;top:56px;width:300px;max-height:80vh;overflow:auto;z-index:40;background:rgba(16,19,28,0.94);border:1px solid #2a3140;border-radius:8px;padding:12px;color:#d8d2c0;font:13px monospace";
@@ -42,7 +45,15 @@ window.vsShowSubmit = function (p) {
         }).join("\n");
       });
   }
+  var ownerRun = (window.__vsSnapshot || {}).runId || "";
   btn.onclick = function () {
+    // vs-fix-11075 (DA F2): a panel from a finished run must never POST after
+    // a new run has taken over — compare the live snapshot's runId.
+    var nowRun = (window.__vsSnapshot || {}).runId || "";
+    if (ownerRun && nowRun && nowRun !== ownerRun) {
+      res.textContent = "stale panel — this run was replaced";
+      return;
+    }
     btn.disabled = true;
     var name = (inp.value || "").trim().slice(0, 16) || "nameless";
     fetch("/api/highscores", {

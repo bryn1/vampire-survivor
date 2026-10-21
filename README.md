@@ -23,9 +23,10 @@ Commit the regenerated `static/index.*` artifacts.
 
 ## Test
 ```bash
-bash .tmp/smoke-server-11024.sh    # live API smoke (20 cases, self-starts/kills server)
-python3 -m pytest <run-dir>/out -q # independent black-box suite (server API), if the run dir exists
+bash scripts/smoke.sh    # live API smoke (20 cases; starts/kills its own server on :8912 with a /tmp DB)
 ```
+An independent black-box pytest suite (server API + tree hygiene) lives in the audit run
+dir (`.audits/<run>/out`), outside this repo — not shipped.
 Browser-automation contract: `window.VS_STATE()` returns the 12-field live snapshot; synthetic
 KeyboardEvents drive the game (see `docs/ARCHITECTURE.md`).
 
