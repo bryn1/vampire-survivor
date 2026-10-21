@@ -58,3 +58,24 @@ pixel-exact wraparound. Per-tile vision verdicts: `.tmp/biome-art-11076.txt`.
 | biomes/desert.png | 1024×1024 | 1384508 | Seamless top-down deep dune-sand ground texture at night: fine wind-swept sand with faint thin rippled wind lines across the whole tile, deep ink shadows with muted cold sand-brown highlights, smooth weathered texture, no objects, no plants, no text |
 | biomes/snow.png | 1024×1024 | 1554393 | Seamless top-down bluish-grey snowfield ground texture at night: wind-scoured compacted snow, faint diagonal wind streaks and low sastrugi ridges, fine crystalline grain with scattered tiny frost sparkles and thin blue-grey ice patches, dark underexposed moonlit grade, no objects, no footprints, no text |
 | biomes/tundra.png | 1024×1024 | 1939908 | Seamless top-down frozen cracked-mud ground texture at night: polygonal dried mud crack pattern across the whole tile, thin pale frost lining the cracks, subtle icy sheen patches, cold rough weathered texture, no objects, no rocks, no text |
+
+## Biome enemies (2026-10-21, card 11081)
+
+Four biome-themed enemy sprites for the owner request ("Addition would be different enemie
+types based on biome"). One creature per shipped biome band: moor-brute → MOORLAND (grass),
+dune-scarab → BURNING DUNES (desert), rime-ghoul → THE FROZEN WASTE (snow), pale-wight →
+DEAD TUNDRA (tundra). Same vm100 RTX 3090 imagegen pipeline as the 16 shipped sprites
+(Qwen-Image t2i, Lightning 8-step, `background=transparent` → real PNG alpha RGBA
+cutouts, 1024×1024, no ground shadow plate), each carrying the shipped style anchor and
+the set's "dark body, one glowing signature accent" readability treatment; each silhouette
+is distinct from the hooded shroud wraith. Single-pass t2i except dune-scarab, which was
+regenerated once (v2) after a fleet-vision readability pass found the first cut's outline
+would sink on near-black ground — v2 adds the moonlit rim line tracing shell and legs.
+Per-sprite vision verdicts: `.tmp/enemy-art-11079.txt`.
+
+| file | px | on-disk bytes | prompt description (before the style anchor) |
+|---|---|---|---|
+| enemies/moor-brute.png | 1024×1024 | 1163385 | Hunched bog-body horror creature: a stocky low brute made of twisted gnarled roots and wet dark moss bundled into a hunched shoulders-and-arms silhouette, small buried head, pale green bone-glow (#6fae5a) shining from inside its hollow chest cavity and knotholes, wet moss highlights |
+| enemies/dune-scarab.png | 1024×1024 | 785248 | Six-legged carapace crawler creature: a low wide scarab-like beast with a glossy obsidian-black domed shell, six clawed dark legs splayed outward, a segmented armored underbelly, glowing ember-orange cracks (#c97b3d) splitting the obsidian shell like cooling lava seams, faint ember glow leaking from the cracks; strong moonlight rim light tracing the outer edge of shell and every leg |
+| enemies/rime-ghoul.png | 1024×1024 | 698462 | Gaunt frozen corpse ghoul creature: a tall emaciated humanoid with frostbitten grey-blue skin, a thick crust of white-blue rime frost over its shoulders, arms and ribcage, a tattered frozen shroud hanging stiff and ice-rimed from its arms, hollow eye sockets with a faint cold blue-white glow |
+| enemies/pale-wight.png | 1024×1024 | 656687 | Near-invisible ghostly wight creature: a tall thin spectral humanoid figure made of translucent smoke-grey mist fading at the edges like cold vapor, a faint cold violet glow (#9b8cff) outlining its form and pooling in its hollow face, exposed cracked pale ice bones showing through the mist at its hands and ribs, drifting pose with wispy dissolving lower body |
