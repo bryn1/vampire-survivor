@@ -27,6 +27,20 @@ const ENEMY_TINTS := {
 	"warden": Color(1.0, 0.72, 0.45),
 }
 
+# Biome signature creatures (MC 11082): same separation rule, own hues. Kept
+# as a second table because the acceptance suite pins ENEMY_TINTS to exactly
+# the five classic rows; tint_of() is the single lookup both draw paths use.
+const BIOME_TINTS := {
+	"moor-brute": Color(0.66, 0.78, 0.48),
+	"dune-scarab": Color(0.92, 0.78, 0.42),
+	"rime-ghoul": Color(0.55, 0.82, 0.95),
+	"pale-wight": Color(0.85, 0.82, 0.96),
+}
+
+
+static func tint_of(type: String) -> Color:
+	return ENEMY_TINTS.get(type, BIOME_TINTS.get(type, Color.WHITE))
+
 # Additive glow halos on enemies + Dawnlight: modulate is multiplicative, so
 # a near-black sprite pixel × a pale tint stays dark. A colored aura added on
 # top separates them from the background regardless of sprite darkness.
@@ -39,17 +53,27 @@ const DAWN_GLOW_RADII := Vector2(14.0, 8.0)
 const DAWN_GLOW_ALPHAS := Vector2(0.25, 0.40)
 
 const SPRITE_NAMES := ["player", "player-alt", "enemy-wraith", "enemy-hound",
-	"enemy-crawler", "enemy-cultist", "boss-warden", "coin", "gem"]
+	"enemy-crawler", "enemy-cultist", "boss-warden", "coin", "gem",
+	"enemies/moor-brute", "enemies/dune-scarab", "enemies/rime-ghoul",
+	"enemies/pale-wight"]
 
 # Biome bands (owner ruling MC 11077): the ground tile swaps as the run's
 # clock crosses t_start; tundra carries the boss (9:00) and win (10:00) end.
 # 1024px seamless tiles from static/assets/biomes, mean lum 39-55/255 — dark
 # enough to keep the tinted/glowing sprites readable on top.
+# Each band also fields its enemy roster (MC 11082, owner biome-enemies ask):
+# the classic wraith in every band + the band's signature creature; stats and
+# sprites for every id live in world.gd ENEMY_TYPES — this table is the ONE
+# band source (biome_at() + these ids), read by the single spawn loop.
 const BIOMES := [
-	{"name": "MOORLAND", "tex": "res://assets/biomes/grass.png", "t_start": 0.0},
-	{"name": "BURNING DUNES", "tex": "res://assets/biomes/desert.png", "t_start": 150.0},
-	{"name": "THE FROZEN WASTE", "tex": "res://assets/biomes/snow.png", "t_start": 300.0},
-	{"name": "DEAD TUNDRA", "tex": "res://assets/biomes/tundra.png", "t_start": 450.0},
+	{"name": "MOORLAND", "tex": "res://assets/biomes/grass.png", "t_start": 0.0,
+		"enemies": ["wraith", "moor-brute"]},
+	{"name": "BURNING DUNES", "tex": "res://assets/biomes/desert.png", "t_start": 150.0,
+		"enemies": ["wraith", "dune-scarab"]},
+	{"name": "THE FROZEN WASTE", "tex": "res://assets/biomes/snow.png", "t_start": 300.0,
+		"enemies": ["wraith", "rime-ghoul"]},
+	{"name": "DEAD TUNDRA", "tex": "res://assets/biomes/tundra.png", "t_start": 450.0,
+		"enemies": ["wraith", "pale-wight"]},
 ]
 
 
@@ -100,7 +124,7 @@ func _draw() -> void:
 		_draw_circle_line(VIEW / 2.0 - _cam, r.r, MOON, 3.0, 0.25 * r.life / r.max)
 	for e in world.enemies:
 		var size: float = SIZES.boss if e.boss else SIZES.enemy
-		_draw_sprite(e.sprite, Vector2(e.x, e.y), size, ENEMY_TINTS.get(e.type, Color.WHITE))
+		_draw_sprite(e.sprite, Vector2(e.x, e.y), size, tint_of(e.type))
 		_draw_hp_bar(e)
 	_draw_fx()
 	_draw_player()
@@ -231,7 +255,7 @@ class HaloPass:
 		for e in host.world.enemies:
 			var radii: Vector2 = GameRenderer.BOSS_GLOW_RADII if e.boss else GameRenderer.ENEMY_GLOW_RADII
 			_circles(Vector2(e.x, e.y) - host._cam, radii,
-				GameRenderer.ENEMY_TINTS.get(e.type, Color.WHITE), GameRenderer.GLOW_ALPHAS)
+				GameRenderer.tint_of(e.type), GameRenderer.GLOW_ALPHAS)
 
 	func _circles(screen: Vector2, radii: Vector2, tint: Color, alphas: Vector2) -> void:
 		if screen.x < -radii.x or screen.y < -radii.x or screen.x > GameRenderer.VIEW.x + radii.x or screen.y > GameRenderer.VIEW.y + radii.x:

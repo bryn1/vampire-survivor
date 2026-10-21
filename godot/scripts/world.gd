@@ -6,11 +6,21 @@ const BOSS_AT := 540.0 # "The Hollow Warden" spawns at 9:00
 const HEAL_DROP_CHANCE := 0.015 # Dawnlight drop roll on a normal enemy death
 const HEAL_AMOUNT := 8.0 # hp restored, clamped to max_hp
 
+# Stats + sprite per enemy id (plan §5 classics pinned by the acceptance
+# suite; biome signature creatures MC 11082 — sprites mirrored from
+# static/assets/enemies/ under res://assets/enemies/). Which ids spawn when:
+# BIOMES.enemies in render.gd (band roster) + the GATES rotation below.
 const ENEMY_TYPES := {
 	"wraith": {"hp": 8.0, "spd": 55.0, "dmg": 2.0, "xp": 1.0, "sprite": "enemy-wraith"},
 	"hound": {"hp": 6.0, "spd": 95.0, "dmg": 3.0, "xp": 1.0, "sprite": "enemy-hound"},
 	"crawler": {"hp": 30.0, "spd": 35.0, "dmg": 5.0, "xp": 3.0, "sprite": "enemy-crawler"},
 	"cultist": {"hp": 18.0, "spd": 60.0, "dmg": 6.0, "xp": 4.0, "sprite": "enemy-cultist"},
+	# Band signatures: moor-brute slow+tanky, dune-scarab fast+weak swarmer,
+	# rime-ghoul mid, pale-wight hardest (highest hp + damage).
+	"moor-brute": {"hp": 26.0, "spd": 32.0, "dmg": 4.0, "xp": 2.0, "sprite": "enemies/moor-brute"},
+	"dune-scarab": {"hp": 5.0, "spd": 105.0, "dmg": 2.0, "xp": 1.0, "sprite": "enemies/dune-scarab"},
+	"rime-ghoul": {"hp": 18.0, "spd": 60.0, "dmg": 5.0, "xp": 3.0, "sprite": "enemies/rime-ghoul"},
+	"pale-wight": {"hp": 45.0, "spd": 52.0, "dmg": 9.0, "xp": 4.0, "sprite": "enemies/pale-wight"},
 	"warden": {"hp": 3000.0, "spd": 45.0, "dmg": 12.0, "xp": 0.0, "sprite": "boss-warden", "boss": true},
 }
 
@@ -34,10 +44,14 @@ func reset() -> void:
 	boss_spawned = false
 
 
-func _types_unlocked(minutes: float) -> Array:
-	var open: Array = []
+# Enemy set open at time t (MC 11082): the biome band's own roster
+# (BIOMES.enemies via the one biome_at() helper — wraith in every band + the
+# band's signature creature) plus the classic gate rotation (GATES, minutes).
+# One merged set; the single spawn loop in update_spawns draws from it.
+func _types_open(t: float) -> Array:
+	var open: Array = GameRenderer.biome_at(t).enemies.duplicate()
 	for gate in GATES:
-		if minutes >= gate[0]:
+		if t >= gate[0] * 60.0 and not open.has(gate[1]):
 			open.append(gate[1])
 	return open
 
@@ -72,7 +86,7 @@ func update_spawns(dt: float, game: GameState, view: Vector2) -> void:
 		_spawn_enemy("warden", game, view)
 	var minute := game.time / 60.0
 	spawn_acc += minf(12.0, 1.0 + 1.3 * minute) * dt
-	var open := _types_unlocked(minute)
+	var open := _types_open(game.time)
 	while spawn_acc >= 1.0:
 		spawn_acc -= 1.0
 		_spawn_enemy(open[randi() % open.size()], game, view)
