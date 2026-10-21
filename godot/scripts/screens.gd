@@ -1,5 +1,5 @@
 # Screens layer: menu, level-up cards and the end screen. Mouse works for
-# real users; keyboard picking is routed by main from the JS bridge press
+# real users; keyboard picking is routed by main from the bridge press
 # queue (Contract B), never from here.
 extends CanvasLayer
 
@@ -109,7 +109,9 @@ func _build_end() -> void:
 	box.add_child(_end_title)
 	_end_stats = _label("", 15, MOON)
 	box.add_child(_end_stats)
-	box.add_child(_label("Sign the ledger in the score panel (top right).", 12, MOON))
+	if OS.has_feature("web"): # desktop has no DOM score panel to point at
+		box.add_child(_label("Sign the ledger in the score panel (top right).",
+			12, MOON))
 	box.add_child(_button("Play again", _on_start))
 
 

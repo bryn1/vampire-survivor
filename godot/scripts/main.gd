@@ -62,6 +62,15 @@ func _on_js_key(args: Array) -> void:
 		bridge.on_key(String(args[0]), bool(args[1]))
 
 
+# Single choke point into the JS bridge: while the bridge is inactive
+# (desktop builds, _js null) every call is a silent no-op. No other code
+# may call JavaScriptBridge.eval.
+func _js_eval(js: String) -> void:
+	if _js == null:
+		return
+	_js.call("eval", js, true)
+
+
 func _process(_delta: float) -> void:
 	_hud.update()
 
@@ -72,8 +81,7 @@ func _physics_process(delta: float) -> void:
 	_handle_presses()
 	if game.phase == "playing" and not game.paused:
 		_step(delta)
-	if _js != null:
-		_js.call("eval", "window.__vsSnapshot=" + game.snapshot_json(world.enemies.size()), true)
+	_js_eval("window.__vsSnapshot=" + game.snapshot_json(world.enemies.size()))
 
 
 func _handle_presses() -> void:
@@ -93,8 +101,8 @@ func _handle_presses() -> void:
 				_pick(2)
 			elif bridge.is_enter(code):
 				_pick(0)
-		# gameover / win: Enter deliberately does NOT restart — the DOM score
-		# panel and the Play-again button own that screen.
+		# gameover / win: Enter deliberately does NOT restart — the score
+		# panel (web) and the Play-again button own that screen.
 
 
 func _step(dt: float) -> void:
@@ -167,13 +175,14 @@ func _end_run(result: String) -> void:
 		"Gold %d" % game.stats.gold,
 		"Score %d" % _score(game.stats),
 	])
-	if _js != null:
-		_js.call("eval", "vsShowSubmit(" + JSON.stringify({
-			"score": _score(game.stats),
-			"time_survived": roundf(game.stats.time * 10.0) / 10.0,
-			"kills": game.stats.kills,
-			"level": game.stats.level,
-		}) + ")", true)
+	# The JS-side existence check keeps this a no-op even when the bridge is
+	# active but the DOM submit panel was never installed (head_include absent).
+	_js_eval("if (window.vsShowSubmit) vsShowSubmit(" + JSON.stringify({
+		"score": _score(game.stats),
+		"time_survived": roundf(game.stats.time * 10.0) / 10.0,
+		"kills": game.stats.kills,
+		"level": game.stats.level,
+	}) + ")")
 
 
 func _score(stats: Dictionary) -> int:
