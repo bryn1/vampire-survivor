@@ -14,6 +14,17 @@ const BONE := Color8(0xd8, 0xd2, 0xc0)
 const BLOOD := Color8(0x8e, 0x2f, 0x35)
 const ICHOR := Color8(0x6f, 0xae, 0x5a)
 const EMBER := Color8(0xc9, 0x7b, 0x3d)
+const DAWNLIGHT := Color(1.0, 0.94, 0.66) # bright warm glow of the heal pickup
+
+# Per-type modulate so enemy silhouettes separate from the dark background
+# (playthrough finding: sprites read as invisible). Alpha stays 1.0.
+const ENEMY_TINTS := {
+	"wraith": Color(0.62, 0.70, 0.88),
+	"hound": Color(0.88, 0.72, 0.55),
+	"crawler": Color(0.58, 0.80, 0.62),
+	"cultist": Color(0.75, 0.62, 0.88),
+	"warden": Color(1.0, 0.72, 0.45),
+}
 
 const SPRITE_NAMES := ["player", "player-alt", "enemy-wraith", "enemy-hound",
 	"enemy-crawler", "enemy-cultist", "boss-warden", "coin", "gem"]
@@ -48,11 +59,13 @@ func _draw() -> void:
 		_draw_sprite("gem", Vector2(g.x, g.y), SIZES.gem, Color.WHITE)
 	for c in world.coins:
 		_draw_sprite("coin", Vector2(c.x, c.y), SIZES.coin, Color.WHITE)
+	for h in world.heals:
+		_draw_dawnlight(Vector2(h.x, h.y))
 	for r in fx.rings:
 		_draw_circle_line(VIEW / 2.0 - _cam, r.r, MOON, 3.0, 0.25 * r.life / r.max)
 	for e in world.enemies:
 		var size: float = SIZES.boss if e.boss else SIZES.enemy
-		_draw_sprite(e.sprite, Vector2(e.x, e.y), size, Color.WHITE)
+		_draw_sprite(e.sprite, Vector2(e.x, e.y), size, ENEMY_TINTS.get(e.type, Color.WHITE))
 		_draw_hp_bar(e)
 	_draw_fx()
 	_draw_player()
@@ -97,6 +110,17 @@ func _draw_sprite(name: String, pos: Vector2, size: float, mod: Color) -> void:
 		draw_texture_rect(tex, Rect2(screen - Vector2(size, size) / 2.0, Vector2(size, size)), false, mod)
 	else: # placeholder path — never crashes on a missing PNG
 		draw_rect(Rect2(screen - Vector2(size, size) / 2.0, Vector2(size, size)), Color(BLOOD, mod.a))
+
+
+# Dawnlight heal pickup: a small bright cross drawn programmatically (no PNG).
+func _draw_dawnlight(pos: Vector2) -> void:
+	const ARM := 14.0
+	const BAR := 4.0
+	var screen := pos - _cam
+	if screen.x < -ARM or screen.y < -ARM or screen.x > VIEW.x + ARM or screen.y > VIEW.y + ARM:
+		return
+	draw_rect(Rect2(screen - Vector2(ARM, BAR) / 2.0, Vector2(ARM, BAR)), DAWNLIGHT)
+	draw_rect(Rect2(screen - Vector2(BAR, ARM) / 2.0, Vector2(BAR, ARM)), DAWNLIGHT)
 
 
 func _draw_hp_bar(e: Dictionary) -> void:

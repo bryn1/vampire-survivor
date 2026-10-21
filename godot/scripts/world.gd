@@ -3,6 +3,8 @@ class_name GameWorld
 extends RefCounted
 
 const BOSS_AT := 540.0 # "The Hollow Warden" spawns at 9:00
+const HEAL_DROP_CHANCE := 0.015 # Dawnlight drop roll on a normal enemy death
+const HEAL_AMOUNT := 8.0 # hp restored, clamped to max_hp
 
 const ENEMY_TYPES := {
 	"wraith": {"hp": 8.0, "spd": 55.0, "dmg": 2.0, "xp": 1.0, "sprite": "enemy-wraith"},
@@ -18,6 +20,7 @@ const GATES := [[0.0, "wraith"], [2.0, "hound"], [4.0, "crawler"], [6.0, "cultis
 var enemies: Array = []
 var gems: Array = []
 var coins: Array = []
+var heals: Array = [] # Dawnlight pickups; +HEAL_AMOUNT hp, clamped to max_hp
 var spawn_acc := 0.0
 var boss_spawned := false
 
@@ -26,6 +29,7 @@ func reset() -> void:
 	enemies.clear()
 	gems.clear()
 	coins.clear()
+	heals.clear()
 	spawn_acc = 0.0
 	boss_spawned = false
 
@@ -86,18 +90,25 @@ func update_entities(dt: float, game: GameState) -> void:
 		if e.hit_cd > 0.0:
 			e.hit_cd -= dt
 	var magnet: float = 60.0 * (1.0 + 0.25 * game.passives.grip)
-	for g in gems:
+	_magnetize(gems, p, magnet, dt)
+	_magnetize(heals, p, magnet, dt)
+	if p.iframes > 0.0:
+		p.iframes -= dt
+
+
+# Grip-scaled pull shared by every magnetised pickup kind (gems + Dawnlight).
+func _magnetize(items: Array, p: Dictionary, magnet: float, dt: float) -> void:
+	for g in items:
 		var gx: float = p.x - g.x
 		var gy: float = p.y - g.y
 		var gd := maxf(sqrt(gx * gx + gy * gy), 1.0)
 		if gd < magnet:
 			g.x += gx / gd * 220.0 * dt
 			g.y += gy / gd * 220.0 * dt
-	if p.iframes > 0.0:
-		p.iframes -= dt
 
 
 # Death payout: ~70% gem, 6% coin (1-3g); the Warden adds +50 gold.
+# Dawnlight heal: 1.5% roll on any death, guaranteed once from a boss.
 func kill_enemy(game: GameState, enemy: Dictionary) -> void:
 	var i := enemies.find(enemy)
 	if i >= 0:
@@ -109,6 +120,8 @@ func kill_enemy(game: GameState, enemy: Dictionary) -> void:
 		gems.append({"x": enemy.x, "y": enemy.y, "xp": enemy.xp})
 	if randf() < 0.06:
 		coins.append({"x": enemy.x, "y": enemy.y, "gold": 1 + randi() % 3})
+	if enemy.boss or randf() < HEAL_DROP_CHANCE:
+		heals.append({"x": enemy.x, "y": enemy.y})
 
 
 # Consume pickups inside touch range; returns gold picked up this step.
@@ -124,6 +137,11 @@ func collect_pickups(game: GameState) -> int:
 		if _dist(c, game.player) < 16.0:
 			coins.remove_at(i)
 			gold += c.gold
+	for i in range(heals.size() - 1, -1, -1):
+		var h: Dictionary = heals[i]
+		if _dist(h, game.player) < 16.0:
+			heals.remove_at(i) # consumed even at full hp — never a wasted item
+			game.hp = minf(game.max_hp, game.hp + HEAL_AMOUNT)
 	return gold
 
 
