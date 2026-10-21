@@ -49,15 +49,36 @@ four are graded very dark (mean luminance 39–55/255, no blown highlights). Gra
 tundra are single-pass t2i (seed 42); desert and snow went through extra passes
 (desert: t2i seed 44 + reference-edit seed 45 to remove scrub/perspective; snow: t2i
 seed 44 + reference-edit seed 45 for snow identity + a deterministic 0.58× PIL
-luminance grade). Seamless-tiling is style-level (uniform edge-to-edge density), not
-pixel-exact wraparound. Per-tile vision verdicts: `.tmp/biome-art-11076.txt`.
+luminance grade). Seamless-tiling was style-level (uniform edge-to-edge density), not
+pixel-exact wraparound — SUPERSEDED by the tile re-master below (card 11084): all four
+files below were replaced; their bytes/ratios are the re-mastered ones, the 11078
+generation history is kept for provenance. Per-tile vision verdicts:
+`.tmp/biome-art-11076.txt`.
 
 | file | px | on-disk bytes | prompt description (before the style anchor) |
 |---|---|---|---|
-| biomes/grass.png | 1024×1024 | 1975560 | Seamless top-down dark moor-grass ground texture at night: short dense dormant grass tufts barely visible in moonlight, subtle dark moss-green and grey-brown tuft clumping, faint patches of damp dark earth, rough weathered texture, no objects, no path, no characters, no text |
-| biomes/desert.png | 1024×1024 | 1384508 | Seamless top-down deep dune-sand ground texture at night: fine wind-swept sand with faint thin rippled wind lines across the whole tile, deep ink shadows with muted cold sand-brown highlights, smooth weathered texture, no objects, no plants, no text |
-| biomes/snow.png | 1024×1024 | 1554393 | Seamless top-down bluish-grey snowfield ground texture at night: wind-scoured compacted snow, faint diagonal wind streaks and low sastrugi ridges, fine crystalline grain with scattered tiny frost sparkles and thin blue-grey ice patches, dark underexposed moonlit grade, no objects, no footprints, no text |
-| biomes/tundra.png | 1024×1024 | 1939908 | Seamless top-down frozen cracked-mud ground texture at night: polygonal dried mud crack pattern across the whole tile, thin pale frost lining the cracks, subtle icy sheen patches, cold rough weathered texture, no objects, no rocks, no text |
+| biomes/grass.png | 1024×1024 | 2445218 | Seamless top-down dark moor-grass ground texture at night: short dense dormant grass tufts barely visible in moonlight, subtle dark moss-green and grey-brown tuft clumping, faint patches of damp dark earth, rough weathered texture, no objects, no path, no characters, no text (re-mastered card 11084) |
+| biomes/desert.png | 1024×1024 | 1546787 | Seamless top-down deep dune-sand ground texture at night: fine wind-swept sand with faint thin rippled wind lines across the whole tile, deep ink shadows with muted cold sand-brown highlights, smooth weathered texture, no objects, no plants, no text (re-mastered card 11084, seed 44 regen — v1 carried the same perspective banding as the 11078 tile) |
+| biomes/snow.png | 1024×1024 | 1811095 | Seamless top-down bluish-grey snowfield ground texture at night: wind-scoured compacted snow, faint diagonal wind streaks and low sastrugi ridges, fine crystalline grain with scattered tiny frost sparkles and thin blue-grey ice patches, dark underexposed moonlit grade, no objects, no footprints, no text (re-mastered card 11084, seed 44 regen — v1 carried a crust/flat-snow perspective break) |
+| biomes/tundra.png | 1024×1024 | 2383921 | Seamless top-down frozen cracked-mud ground texture at night: polygonal dried mud crack pattern across the whole tile, thin pale frost lining the cracks, subtle icy sheen patches, cold rough weathered texture, no objects, no rocks, no text (re-mastered card 11084) |
+
+## Tile re-master (card 11084, 2026-10-21)
+
+DA-c2 G2: the 11078 biome tiles showed VISIBLE SEAMS tiled (render.gd `tiled=true`;
+live :8123 captures). All four tiles re-mastered genuinely seamless on the same vm100
+RTX 3090 imagegen pipeline, then made wrap-continuous by a deterministic recipe
+(FFT wrap-safe low-frequency flatten → roll-half offset-blend across the midlines with
+high-frequency detail restore → auto film grain → per-channel palette match to the
+11078 file's mean/std — palette and mean luminance preserved within ±1). Both copies
+replaced (`static/assets/biomes/` + `godot/assets/biomes/`, byte-identical; dims/type
+unchanged so the `.import` files need no edit — the ctex caches regenerate on next
+Godot open/export). Seam metric: mean|left−right| and |top−bottom| wrap-diff ÷
+mean|neighbour-diff| (~1.0 seamless; gate ≤1.25). Worst-axis old→new:
+grass 4.44→1.09, desert 8.92→1.02, snow 7.85→1.12, tundra 3.38→1.10. Full old-vs-new
+table, regen log and vision-lane leg (partial + low-confidence, disclosed):
+`.tmp/tile-reseam-11084.txt`. Residual honest gap: the offset-blend midline bands are
+faintly perceptible at tile CENTRES on grass close-up (soft, not an edge step); the
+tile EDGES — what tiling shows — are seam-free by measurement.
 
 ## Biome enemies (2026-10-21, card 11081)
 
