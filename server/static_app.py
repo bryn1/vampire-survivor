@@ -21,8 +21,15 @@ CONTENT_TYPES = {
 
 
 def _resolve(docroot, raw_path):
-    """Absolute path inside realpath(docroot), or None if it escapes."""
+    """Absolute path inside realpath(docroot), or None if it escapes.
+
+    A decoded NUL byte is rejected here: realpath would raise ValueError
+    and kill the handler thread, so it resolves to None and gets the
+    same 404 NOT_FOUND as any other unknown path.
+    """
     request_path = unquote(urlsplit(raw_path).path)
+    if "\x00" in request_path:
+        return None
     if request_path == "/":
         request_path = "/index.html"
     real_root = os.path.realpath(docroot)
