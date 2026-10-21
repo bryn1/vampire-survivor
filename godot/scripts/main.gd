@@ -71,8 +71,8 @@ func _js_eval(js: String) -> void:
 	_js.call("eval", js, true)
 
 
-func _process(_delta: float) -> void:
-	_hud.update()
+func _process(delta: float) -> void:
+	_hud.update(delta)
 
 
 # Snapshot + simulation run on the fixed physics tick (Contract B: time

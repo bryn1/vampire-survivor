@@ -1,10 +1,10 @@
-# World renderer: procedural background (radial ink→slate gradient +
-# vignette), sprite draws at the Contract C sizes, and transient weapon FX.
+# World renderer: biome ground tiles (BIOMES band table, tiled world-locked
+# behind all gameplay), sprite draws at the Contract C sizes, and transient
+# weapon FX.
 class_name GameRenderer
 extends Node2D
 
 const VIEW := Vector2(1280, 720)
-const BG_SAMPLES := Vector2i(320, 180)
 
 # Plan §4 "drawn at" sizes (px, square) — native PNG size is ignored.
 const SIZES := {"player": 40.0, "enemy": 34.0, "boss": 128.0, "coin": 14.0, "gem": 14.0}
@@ -41,17 +41,38 @@ const DAWN_GLOW_ALPHAS := Vector2(0.25, 0.40)
 const SPRITE_NAMES := ["player", "player-alt", "enemy-wraith", "enemy-hound",
 	"enemy-crawler", "enemy-cultist", "boss-warden", "coin", "gem"]
 
+# Biome bands (owner ruling MC 11077): the ground tile swaps as the run's
+# clock crosses t_start; tundra carries the boss (9:00) and win (10:00) end.
+# 1024px seamless tiles from static/assets/biomes, mean lum 39-55/255 — dark
+# enough to keep the tinted/glowing sprites readable on top.
+const BIOMES := [
+	{"name": "MOORLAND", "tex": "res://assets/biomes/grass.png", "t_start": 0.0},
+	{"name": "BURNING DUNES", "tex": "res://assets/biomes/desert.png", "t_start": 150.0},
+	{"name": "THE FROZEN WASTE", "tex": "res://assets/biomes/snow.png", "t_start": 300.0},
+	{"name": "DEAD TUNDRA", "tex": "res://assets/biomes/tundra.png", "t_start": 450.0},
+]
+
+
+static func biome_at(t: float) -> Dictionary:
+	var pick: Dictionary = BIOMES[0]
+	for b in BIOMES:
+		if t >= b.t_start:
+			pick = b
+	return pick
+
+
 var game: GameState
 var world: GameWorld
 var fx: WeaponSystem
 
-var _bg: ImageTexture
+var _biome_tex := {} # BIOMES tex path -> Texture2D
 var _sprites := {}
 var _cam := Vector2.ZERO
 
 
 func _ready() -> void:
-	_bg = _build_background()
+	for b in BIOMES:
+		_biome_tex[b.tex] = load(b.tex)
 	for name in SPRITE_NAMES:
 		_sprites[name] = load("res://assets/" + name + ".png")
 	var glow := HaloPass.new()
@@ -68,8 +89,7 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	if game == null or world == null:
 		return
-	draw_texture_rect(_bg, Rect2(Vector2.ZERO, VIEW), false)
-	_draw_grid()
+	_draw_terrain(biome_at(game.time))
 	for g in world.gems:
 		_draw_sprite("gem", Vector2(g.x, g.y), SIZES.gem, Color.WHITE)
 	for c in world.coins:
@@ -163,19 +183,19 @@ func _draw_boss_bar() -> void:
 		HORIZONTAL_ALIGNMENT_CENTER, VIEW.x, 12, BONE)
 
 
-func _draw_grid() -> void:
-	const STEP := 64.0
-	var ox := fposmod(-_cam.x, STEP)
-	var oy := fposmod(-_cam.y, STEP)
-	var col := Color(MOON, 0.055)
-	var x := ox
-	while x < VIEW.x:
-		draw_line(Vector2(x, 0), Vector2(x, VIEW.y), col, 1.0)
-		x += STEP
-	var y := oy
-	while y < VIEW.y:
-		draw_line(Vector2(0, y), Vector2(VIEW.x, y), col, 1.0)
-		y += STEP
+# Biome ground: the band's 1024px tile REPEATED across the visible world rect
+# [_cam, _cam+VIEW]. The rect origin is snapped to the tile grid, so the
+# terrain is world-locked and pans with the camera, not screen-locked. Drawn
+# first, so gameplay always stays on top; the tiles are dark by themselves
+# (mean lum 39-55/255), no modulation of anything else.
+func _draw_terrain(band: Dictionary) -> void:
+	var tex: Texture2D = _biome_tex.get(band.tex)
+	if tex == null: # placeholder path — never crashes on a missing PNG
+		draw_rect(Rect2(Vector2.ZERO, VIEW), INK)
+		return
+	var size := Vector2(tex.get_width(), tex.get_height())
+	var origin := (_cam / size).floor() * size
+	draw_texture_rect(tex, Rect2(origin - _cam, _cam + VIEW - origin), true)
 
 
 func _draw_circle_line(center: Vector2, radius: float, color: Color, width: float, alpha: float) -> void:
@@ -184,26 +204,6 @@ func _draw_circle_line(center: Vector2, radius: float, color: Color, width: floa
 		var ang := TAU * i / 24.0
 		pts.append(center + Vector2(cos(ang), sin(ang)) * radius)
 	draw_polyline(pts, Color(color, alpha), width)
-
-
-# Bakes the radial ink→slate gradient + vignette once into a small texture.
-func _build_background() -> ImageTexture:
-	var img := Image.create(BG_SAMPLES.x, BG_SAMPLES.y, false, Image.FORMAT_RGB8)
-	var grad_inner := Color8(0x23, 0x2b, 0x3a)
-	var center := Vector2(BG_SAMPLES.x, BG_SAMPLES.y) / 2.0
-	var scale := BG_SAMPLES.x / VIEW.x
-	var r0 := 60.0 * scale
-	var r1 := VIEW.length() * 0.7 * scale
-	var rv0 := minf(VIEW.x, VIEW.y) * 0.35 * scale
-	var rv1 := VIEW.length() * 0.62 * scale
-	for py in BG_SAMPLES.y:
-		for px in BG_SAMPLES.x:
-			var d := center.distance_to(Vector2(px, py))
-			var t := clampf((d - r0) / (r1 - r0), 0.0, 1.0)
-			var col := grad_inner.lerp(INK, t)
-			var va := clampf((d - rv0) / (rv1 - rv0), 0.0, 1.0) * 0.55
-			img.set_pixel(px, py, col.lerp(Color.BLACK, va))
-	return ImageTexture.create_from_image(img)
 
 
 # Additive glow pass: child node whose CanvasItemMaterial adds light instead

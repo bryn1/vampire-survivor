@@ -1,5 +1,6 @@
-# HUD: timer, HP bar, XP bar + level, gold, kills, weapon icon row.
-# Pure display — built in code, updated from GameState every frame.
+# HUD: timer, HP bar, XP bar + level, gold, kills, weapon icon row, and the
+# biome-name banner. Pure display — built in code, updated from GameState
+# every frame.
 extends CanvasLayer
 
 const INK := Color8(0x10, 0x13, 0x1c)
@@ -7,6 +8,8 @@ const BLOOD := Color8(0x8e, 0x2f, 0x35)
 const ICHOR := Color8(0x6f, 0xae, 0x5a)
 const BONE := Color8(0xd8, 0xd2, 0xc0)
 const EMBER_TINT := Color8(0xc9, 0x7b, 0x3d)
+
+const BIOME_FLASH := 3.0 # seconds the biome-name banner stays up, fading last 1s
 
 var game: GameState
 
@@ -19,6 +22,9 @@ var _gold: Label
 var _kills: Label
 var _weapons: HBoxContainer
 var _pause: Label
+var _biome: Label
+var _biome_name := ""
+var _biome_left := 0.0
 var _row_sig := ""
 
 
@@ -47,9 +53,16 @@ func _ready() -> void:
 	_pause.modulate = EMBER_TINT
 	_pause.visible = false
 	row.add_child(_pause)
+	_biome = _label("")
+	_biome.add_theme_font_size_override("font_size", 26)
+	_biome.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_biome.position = Vector2(0, 140)
+	_biome.size = Vector2(GameRenderer.VIEW.x, 40)
+	_biome.modulate.a = 0.0
+	add_child(_biome)
 
 
-func update() -> void:
+func update(delta: float) -> void:
 	if game == null:
 		return
 	_timer.text = _fmt_time(game.time)
@@ -62,6 +75,24 @@ func update() -> void:
 	_kills.text = "Kills %d" % game.kills
 	_pause.visible = game.paused and game.phase == "playing"
 	_render_weapon_row()
+	_update_biome_flash(delta)
+
+
+# Biome banner (MC 11077): on every band change (game.time crossing a BIOMES
+# t_start, read via the one GameRenderer.biome_at mechanism) the band name
+# flashes full-alpha and fades out over BIOME_FLASH seconds.
+func _update_biome_flash(delta: float) -> void:
+	if game.phase != "playing":
+		_biome_name = "" # re-arm: the next run flashes its first band
+	else:
+		var band: Dictionary = GameRenderer.biome_at(game.time)
+		if band.name != _biome_name:
+			_biome_name = band.name
+			_biome.text = _biome_name
+			_biome_left = BIOME_FLASH
+	if _biome_left > 0.0:
+		_biome_left = maxf(0.0, _biome_left - delta)
+		_biome.modulate.a = clampf(_biome_left, 0.0, 1.0)
 
 
 func _render_weapon_row() -> void:
