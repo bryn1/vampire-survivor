@@ -23,10 +23,14 @@ Commit the regenerated `static/index.*` artifacts.
 
 ## Test
 ```bash
+python3 -m pytest -q -p no:cacheprovider tests/   # acceptance suite: 136 tests, all green from the repo root
 bash scripts/smoke.sh    # live API smoke (20 cases; starts/kills its own server on :8912 with a /tmp DB)
 ```
-An independent black-box pytest suite (server API + tree hygiene) lives in the audit run
-dir (`.audits/<run>/out`), outside this repo — not shipped.
+The black-box pytest suite ships in `tests/` (7 files: server API + validation, game numbers,
+static contract, assets manifest, tree hygiene) — run it from the repo root; pytest is the only
+test dep. `tests/conftest.py` starts and stops the real server itself on :8931/:8932 with throwaway
+/tmp DBs (never :8123, never `data/`). `scripts/smoke.sh` is the live-HTTP gate: green means it
+prints `RESULT: PASS=20 FAIL=0` and exits 0 (last line `VERIFY_EXIT=0`).
 Browser-automation contract: `window.VS_STATE()` returns the 12-field live snapshot; synthetic
 KeyboardEvents drive the game (see `docs/ARCHITECTURE.md`).
 
