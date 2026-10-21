@@ -41,3 +41,7 @@ KeyboardEvents drive the game (see `docs/ARCHITECTURE.md`).
 - `docs/ARCHITECTURE.md` — modules, entrypoints, ports, data stores (kept true)
 
 Limitations: no audio (Web build); leaderboard has no auth (local PoC by design).
+
+## Related
+
+- **Hollow Dawn 3D** — the 3D remake (animated 3D characters, same top-down loop) lives in its own repo with its own releases: https://github.com/bryn1/hollow-dawn-3d (owner ruling 2026-10-21: "Go, make this its own github repo with its own releases"). This repo remains the shipped 2D original.
