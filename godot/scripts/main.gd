@@ -139,6 +139,11 @@ func _step(dt: float) -> void:
 
 
 func _start_game() -> void:
+	# vs-fix-11083: a score panel from a finished run is dead UI the moment a
+	# new run starts — remove it here, the single run-start funnel (menu Enter
+	# plus menu Start / Play again via start_pressed). _js_eval no-ops off-web;
+	# the DOM guard no-ops when no panel exists (symmetric to _end_run's show).
+	_js_eval("var vsPanel=document.getElementById('vs-submit'); if (vsPanel) vsPanel.remove();")
 	world.reset()
 	fx.clear_fx()
 	game.start_run()

@@ -14,6 +14,9 @@ window.VS_STATE = function () { return window.__vsSnapshot; };
 window.vsShowSubmit = function (p) {
   // vs-fix-11075 (DA F2): rebuild the panel on every terminal show — a second
   // death gets a fresh score line, empty #vs-result and an enabled button.
+  // vs-fix-11083: symmetric removal lives on the run-start path — main.gd
+  // _start_game() deletes #vs-submit through the JS bridge the moment a new
+  // run begins, so a dead panel never sits over live gameplay.
   var stalePanel = document.getElementById("vs-submit");
   if (stalePanel) stalePanel.remove();
   var d = document.createElement("div");
