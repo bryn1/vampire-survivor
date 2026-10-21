@@ -37,3 +37,24 @@ Per-asset prompts = the description line below + " — " + the style anchor abov
 
 All 16 verified with `file` as `PNG image data, …, 8-bit/color RGBA, non-interlaced`
 (real alpha cutout per contract).
+
+## Biome ground tiles (2026-10-21, card 11078)
+
+Four top-down game-ground texture tiles for the owner terrain/biome request ("terrain,
+different biomes like snow, desert, grass, tundra and so on"). Generated on the same
+vm100 RTX 3090 imagegen pipeline (Qwen-Image t2i, Lightning 8-step) with the style
+anchor's dark moonlit palette, but **opaque 8-bit RGB** ground (no alpha) — these are
+backgrounds, the player sprite and enemy glow halos must stay readable ON TOP, so all
+four are graded very dark (mean luminance 39–55/255, no blown highlights). Grass and
+tundra are single-pass t2i (seed 42); desert and snow went through extra passes
+(desert: t2i seed 44 + reference-edit seed 45 to remove scrub/perspective; snow: t2i
+seed 44 + reference-edit seed 45 for snow identity + a deterministic 0.58× PIL
+luminance grade). Seamless-tiling is style-level (uniform edge-to-edge density), not
+pixel-exact wraparound. Per-tile vision verdicts: `.tmp/biome-art-11076.txt`.
+
+| file | px | on-disk bytes | prompt description (before the style anchor) |
+|---|---|---|---|
+| biomes/grass.png | 1024×1024 | 1975560 | Seamless top-down dark moor-grass ground texture at night: short dense dormant grass tufts barely visible in moonlight, subtle dark moss-green and grey-brown tuft clumping, faint patches of damp dark earth, rough weathered texture, no objects, no path, no characters, no text |
+| biomes/desert.png | 1024×1024 | 1384508 | Seamless top-down deep dune-sand ground texture at night: fine wind-swept sand with faint thin rippled wind lines across the whole tile, deep ink shadows with muted cold sand-brown highlights, smooth weathered texture, no objects, no plants, no text |
+| biomes/snow.png | 1024×1024 | 1554393 | Seamless top-down bluish-grey snowfield ground texture at night: wind-scoured compacted snow, faint diagonal wind streaks and low sastrugi ridges, fine crystalline grain with scattered tiny frost sparkles and thin blue-grey ice patches, dark underexposed moonlit grade, no objects, no footprints, no text |
+| biomes/tundra.png | 1024×1024 | 1939908 | Seamless top-down frozen cracked-mud ground texture at night: polygonal dried mud crack pattern across the whole tile, thin pale frost lining the cracks, subtle icy sheen patches, cold rough weathered texture, no objects, no rocks, no text |
