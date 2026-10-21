@@ -1,6 +1,6 @@
 LEDGER — vampire_survivor "Hollow Dawn" (MC 11021, run .audits/202610201514-81bb9a6c)
 goal: fully playable survivors-style game, own 3090 art, public bryn1 repo. acceptance: goal.md.
-STATUS: SHIPPED 2026-10-21 (public bryn1/vampire-survivor; release v1.0.0 with HollowDawn.exe asset uploaded; TEST c2 PASS + DA FIX cycle in run .audits/202610201514-81bb9a6c)
+STATUS: SHIPPED 2026-10-21 (public bryn1/vampire-survivor; releases v1.0.0 HollowDawn.exe + v1.1.0 HollowDawn-final.exe; TEST c4 PASS @ aae77d6; DA c3 FIX carried ONE driver G3 = ARCHITECTURE.md de-stale, closed by the ARCHITECT closing MC 11027 (doc rewritten against the final tree; hygiene + layout verified); run .audits/202610201514-81bb9a6c)
 - T1 architect-open: DONE (placement-plan.md; DA declined anti-ceremony, post-build DA covers it)
 - T2/T3/T4 js-client/server/art: DELIVERED (server live-VERIFIED, art VERIFIED, js client superseded)
 - OWNER AMENDMENT: Godot engine -> T8 godot client DELIVERED live-verified-in-browser by child (VS_STATE, pause, spawns, submit)
